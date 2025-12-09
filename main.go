@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/albqvictor1508/abacatepay-cli/cmd"
 
 func main() {
-	fmt.Print("Hello World")
+    cmd.Exec()
 }
