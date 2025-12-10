@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/albqvictor1508/abacatepay-cli/internal/prompts"
 	"github.com/spf13/cobra"
+	"honnef.co/go/tools/config"
 )
 
 var (
@@ -39,6 +41,11 @@ func loginOnAbacatepay() error {
 
 	if len(name) < 3 || len(name) > 50 {
 		return fmt.Errorf("the profile name must to be at 3 and 50 characters")
+	}
+
+	cfg, err := config.Load()
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error to load config: %w", err)
 	}
 
 	return cmd.Start()
