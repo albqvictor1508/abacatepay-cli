@@ -10,34 +10,42 @@ import (
 const baseURL = "https://api.abacatepay.com/v1"
 
 type Client struct {
-	apiKey     string
+	key     string
 	httpClient *http.Client
 }
 
-func NewClient(apiKey string) *Client {
+type AbacatePayResponse struct {
+	data	any
+	error	string
+}
+
+func NewClient(key string) *Client {
 	return &Client{
-		apiKey: apiKey,
+		key: key,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
 	}
 }
 
-func ValidateAPIKey(apiKey string) (bool, error) {
-	client := NewClient(apiKey)
+func ValidateAPIKey(key string) (bool, error) {
+	client := NewClient(key)
 
-	req, err := http.NewRequest("GET", baseURL+"/store/get", nil)
+	req, err := http.NewRequest("GET", baseURL + "/store/get", nil)
+
 	if err != nil {
 		return false, nil
 	}
 
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer " + key)
 	req.Header.Set("Content-Type", "application/json")
 
 	reply, err := client.httpClient.Do(req)
+
 	if err != nil {
 		return false, err
 	}
+
 	defer reply.Body.Close()
 
 	if reply.StatusCode == http.StatusOK {
@@ -48,10 +56,11 @@ func ValidateAPIKey(apiKey string) (bool, error) {
 		return false, nil
 	}
 
-	var error map[string]interface{}
+	var error AbacatePayResponse
+
 	if err := json.NewDecoder(reply.Body).Decode(&error); err != nil {
-		return false, fmt.Errorf("error to validate: status %d", reply.StatusCode)
+		return false, fmt.Errorf("Unknown AbacatePay error, status (%d)", reply.StatusCode)
 	}
 
-	return false, fmt.Errorf("error to validate: %v", error)
+	return false, fmt.Errorf(error.error)
 }
