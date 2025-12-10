@@ -30,6 +30,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -51,4 +52,28 @@ func Load() (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+func (c *Config) Save() error {
+	path, err := getPath()
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0o644)
+}
+
+func (c *Config) ProfileExists(name string) bool {
+	_, exists := c.Profiles[name]
+	return exists
 }
