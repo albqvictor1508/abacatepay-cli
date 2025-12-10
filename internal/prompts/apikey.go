@@ -1,13 +1,37 @@
 package prompts
 
-import "github.com/AlecAivazis/survey/v2"
+import (
+	"os"
+
+	"github.com/AlecAivazis/survey/v2"
+)
 
 func AskAPIKey() (string, error) {
-	var key string
+	var useFromEnv bool
+	var key = os.Getenv("ABACATE_PAY_API_KEY")
 
-	err := survey.AskOne(&survey.Password{
-		Message: "What's the API key?",
-	}, &key, survey.WithValidator(survey.Required))
+	isUsingFromEnv := len(key) > 0
 
-	return key, err
+	if isUsingFromEnv {
+		err := survey.AskOne(&survey.Confirm{
+			Default: false,
+			Message: "We detected an API key in ABACATE_PAY_API_KEY enviroment. Do you want to use it?",
+		}, &useFromEnv)
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if !useFromEnv {
+		err := survey.AskOne(&survey.Password{
+			Message: "What's the API key?",
+		}, &key, survey.WithValidator(survey.Required))
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return key, nil
 }

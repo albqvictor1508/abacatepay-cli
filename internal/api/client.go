@@ -10,13 +10,13 @@ import (
 const baseURL = "https://api.abacatepay.com/v1"
 
 type Client struct {
-	key     string
+	key        string
 	httpClient *http.Client
 }
 
 type AbacatePayResponse struct {
-	data	any
-	error	string
+	data  any
+	error string
 }
 
 func NewClient(key string) *Client {
@@ -31,13 +31,13 @@ func NewClient(key string) *Client {
 func ValidateAPIKey(key string) (bool, error) {
 	client := NewClient(key)
 
-	req, err := http.NewRequest("GET", baseURL + "/store/get", nil)
+	req, err := http.NewRequest("GET", baseURL+"/store/get", nil)
 
 	if err != nil {
 		return false, nil
 	}
 
-	req.Header.Set("Authorization", "Bearer " + key)
+	req.Header.Set("Authorization", "Bearer "+key)
 	req.Header.Set("Content-Type", "application/json")
 
 	reply, err := client.httpClient.Do(req)

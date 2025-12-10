@@ -10,42 +10,61 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	apiKey string
-	name   string
-)
-
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Log in on Abacatepay",
+	Short: "Log in on Abacatepay with an API key",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return loginOnAbacatepay()
+		return logIn()
 	},
 }
 
+var (
+	key  string
+	name string
+)
+
 func init() {
-	loginCmd.Flags().StringVar(&apiKey, "key", "", "Abacate Pay's API Key")
-	loginCmd.Flags().StringVar(&name, "name", "", "Profile name (min 3, max 50 characters)")
+	loginCmd.Flags().StringVar(&key, "key", "", "Abacate Pay's API Key")
+	loginCmd.Flags().StringVar(&name, "name", "", "Name for the profile (Min 3, Max 50 chars.)")
 
 	rootCmd.AddCommand(loginCmd)
 }
 
-func loginOnAbacatepay() error {
+func logIn() error {
 	var cmd *exec.Cmd
 
-	if apiKey == "" || name == "" {
-		if err := prompts.InteractiveMode(apiKey); err != nil {
+	if key == "" {
+		input, err := prompts.AskAPIKey()
+
+		if err != nil {
 			return err
 		}
+
+		key = input
 	}
 
-	if len(name) < 3 || len(name) > 50 {
-		return fmt.Errorf("the profile name must to be at 3 and 50 characters")
+	if name == "" {
+		input, err := prompts.AskProfileName()
+
+		if err != nil {
+			return err
+		}
+
+		name = input
 	}
 
-	cfg, err := config.Load()
+	config, err := config.Load()
+
 	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error to load config: %w", err)
+		return fmt.Errorf("Unknown error while loading the profile (%w)", err)
+	}
+
+	if config.Exists(name) {
+		return fmt.Errorf("Name \"%s\" is already being used as a profile", name)
+	}
+
+	if err := config.Add(name, key); err != nil {
+		return err
 	}
 
 	return cmd.Start()

@@ -4,16 +4,16 @@ import (
 	keyring "github.com/zalando/go-keyring"
 )
 
-var service = "abacate"
+const service = "abacate"
 
-func SaveToKeyring(name, apiKey string) error {
-	return keyring.Set(service, name, apiKey)
+func SaveKeyring(name, key string) error {
+	return keyring.Set(service, name, key)
 }
 
-func GetFromKeyring(name string) (string, error) {
+func GetKeyring(name string) (string, error) {
 	return keyring.Get(service, name)
 }
 
-func DeleteFromKeyring(name string) error {
+func DeleteKeyring(name string) error {
 	return keyring.Delete(service, name)
 }

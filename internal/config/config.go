@@ -7,18 +7,19 @@ import (
 	"time"
 )
 
-type ProfileData struct {
+type Profile struct {
 	CreatedAt string `json:"created_at"`
 	Verified  bool   `json:"verified,omitempty"`
 }
 
 type Config struct {
-	Profiles map[string]ProfileData `json:"profiles"`
-	Current  string                 `json:"current,omitempty"`
+	Profiles map[string]Profile `json:"profiles"`
+	Current  string             `json:"current,omitempty"`
 }
 
 func getPath() (string, error) {
 	home, err := os.UserHomeDir()
+
 	if err != nil {
 		return "", err
 	}
@@ -28,72 +29,92 @@ func getPath() (string, error) {
 
 func Load() (*Config, error) {
 	path, err := getPath()
+
 	if err != nil {
 		return nil, err
 	}
 
 	data, err := os.ReadFile(path)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &Config{
-				Profiles: make(map[string]ProfileData),
+				Profiles: make(map[string]Profile),
 			}, nil
 		}
 
 		return nil, err
 	}
 
-	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	var config Config
+
+	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}
 
-	if cfg.Profiles == nil {
-		cfg.Profiles = make(map[string]ProfileData)
+	if config.Profiles == nil {
+		config.Profiles = make(map[string]Profile)
 	}
 
-	return &cfg, nil
+	return &config, nil
 }
 
-func (c *Config) Save() error {
+func (c *Config) Save(name string, key string) error {
 	path, err := getPath()
+
 	if err != nil {
 		return err
 	}
 
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+
+	const permUserReadWriteExec = 0o755
+
+	if err := os.MkdirAll(dir, permUserReadWriteExec); err != nil {
 		return err
 	}
 
 	data, err := json.MarshalIndent(c, "", "  ")
+
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0o644)
+	if err := SaveKeyring(name, key); err != nil {
+		return err
+	}
+
+	const permFileReadable = 0o644
+
+	return os.WriteFile(path, data, permFileReadable)
 }
 
-func (c *Config) ProfileExists(name string) bool {
-	_, exists := c.Profiles[name]
-	return exists
+func (c *Config) Exists(name string) bool {
+    // Trimmar a string no futuro? name = strings.TrimSpace(name)
+
+    _, exists := c.Profiles[name]
+	
+    return exists
 }
 
-func (c *Config) AddProfile(name, apiKey string) error {
-	c.Profiles[name] = ProfileData{
-		CreatedAt: time.Now().Format(time.RFC3339),
+
+func (c *Config) Add(name, key string) error {
+	c.Profiles[name] = Profile{
 		Verified:  true,
+		CreatedAt: time.Now().Format(time.RFC3339),
 	}
 
-	return c.Save()
+	return c.Save(name, key)
 }
 
-func SaveCurrent(name string) error {
-	cfg, err := Load()
+func SaveCurrent(name string, key string) error {
+	config, err := Load()
+
 	if err != nil {
 		return err
 	}
 
-	cfg.Current = name
-	return cfg.Save()
+	config.Current = name
+
+	return config.Save(name, key)
 }
