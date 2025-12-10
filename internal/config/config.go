@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type ProfileData struct {
@@ -76,4 +77,23 @@ func (c *Config) Save() error {
 func (c *Config) ProfileExists(name string) bool {
 	_, exists := c.Profiles[name]
 	return exists
+}
+
+func (c *Config) AddProfile(name, apiKey string) error {
+	c.Profiles[name] = ProfileData{
+		CreatedAt: time.Now().Format(time.RFC3339),
+		Verified:  true,
+	}
+
+	return c.Save()
+}
+
+func SaveCurrent(name string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	cfg.Current = name
+	return cfg.Save()
 }
