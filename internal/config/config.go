@@ -23,7 +23,7 @@ func getPath() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(home, ".config", "abacate", "abacate.json"), nil
+	return filepath.Join(home, ".abacate", "abacate.json"), nil
 }
 
 func Load() (*Config, error) {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/albqvictor1508/abacatepay-cli/internal/config"
 	"github.com/albqvictor1508/abacatepay-cli/internal/prompts"
 	"github.com/spf13/cobra"
-	"honnef.co/go/tools/config"
 )
 
 var (
