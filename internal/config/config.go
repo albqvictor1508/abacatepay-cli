@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 )
@@ -21,9 +22,33 @@ func getPath() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(home, ".abacate", "abacate.json"), nil
+	return filepath.Join(home, ".config", "abacate", "abacate.json"), nil
 }
 
 func Load() (*Config, error) {
-	return nil
+	path, err := getPath()
+	if err != nil {
+		return nil, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &Config{
+				Profiles: make(map[string]ProfileData),
+			}, nil
+		}
+
+		return nil, err
+	}
+
+	var cfg Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+
+	if cfg.Profiles == nil {
+		cfg.Profiles = make(map[string]ProfileData)
+	}
+
+	return &cfg, nil
 }
