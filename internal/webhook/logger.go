@@ -32,6 +32,13 @@ func NewLogger() *Logger {
 	}
 }
 
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
+}
+
 var timestamp = time.Now().Format("08:06:20")
 
 func (l *Logger) LogReceived(evt WebhookEvent) {
@@ -43,4 +50,45 @@ func (l *Logger) LogReceived(evt WebhookEvent) {
 
 func (l *Logger) LogForwarded(fl *ForwardedLog) {
 	l.gray.Printf("[%s]", timestamp)
+
+	l.printStatusIcon(fl.statusCode)
+	fmt.Printf("%s", fl.evt.Type)
+
+	l.printStatusCode(fl.statusCode)
+
+	l.gray.Printf("%dms\n", fl.duration.Milliseconds())
+	if fl.statusCode >= 400 && len(fl.body) > 0 {
+		l.gray.Printf("Reply:%s\n", truncate(string(fl.body), 100))
+	}
+}
+
+func (l *Logger) printStatusIcon(statusCode int) {
+	if statusCode >= 400 {
+		l.red.Printf("✗ ")
+		l.red.Printf("[%d]", statusCode)
+		return
+	}
+
+	if statusCode >= 200 && statusCode < 300 {
+		l.green.Printf("✓ ")
+		l.green.Printf("[%d]", statusCode)
+		return
+	}
+
+	l.yellow.Printf("→ ")
+	l.yellow.Printf("[%d]", statusCode)
+}
+
+func (l *Logger) printStatusCode(statusCode int) {
+	if statusCode >= 400 {
+		l.red.Printf("[%d]", statusCode)
+		return
+	}
+
+	if statusCode >= 200 && statusCode < 300 {
+		l.green.Printf("[%d]", statusCode)
+		return
+	}
+
+	l.yellow.Printf("[%d]", statusCode)
 }
