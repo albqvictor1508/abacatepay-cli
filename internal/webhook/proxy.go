@@ -19,15 +19,15 @@ type Proxy struct {
 	forwardTo     string
 	signingSecret string
 	logger        *Logger
-	client	      *http.Client
+	client        *http.Client
 	connection    *websocket.Conn
 }
 
 type WebhookEvent struct {
-	ID        string                 `json:"id"`
-	Type      string                 `json:"type"`
-	Data      map[string]any		 `json:"data"`
-	CreatedAt time.Time              `json:"created_at"`
+	ID        string         `json:"id"`
+	Type      string         `json:"type"`
+	Data      map[string]any `json:"data"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 const websocketURL = "wss://api.abacatepay.com/v1/webhooks/stream"
@@ -41,7 +41,7 @@ func NewProxy(apiKey, forwardTo string) *Proxy {
 		apiKey:        apiKey,
 		forwardTo:     forwardTo,
 		signingSecret: genSigningSecret(),
-		client: 	   &http.Client{
+		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
 	}
@@ -54,12 +54,11 @@ func (proxy *Proxy) Connect() error {
 	header.Set("Authorization", "Bearer "+proxy.apiKey)
 
 	connection, reply, err := websocket.DefaultDialer.Dial(websocketURL, header)
-
 	if err != nil {
 		if reply != nil {
 			body, _ := io.ReadAll(reply.Body)
 
-			return fmt.Errorf("Connection error (%d): %s", reply.StatusCode, string(body))
+			return fmt.Errorf("connection error (%d): %s", reply.StatusCode, string(body))
 		}
 
 		return err
@@ -81,7 +80,7 @@ func (proxy *Proxy) Listen() error {
 				return nil
 			}
 
-			return fmt.Errorf("Unknown error while reading event: %w", err)
+			return fmt.Errorf("unknown error while reading event: %w", err)
 		}
 
 		go proxy.Handle(evt)
@@ -94,14 +93,12 @@ func (proxy *Proxy) Handle(event WebhookEvent) {
 	proxy.logger.LogReceived(event)
 
 	payload, err := json.Marshal(event)
-
 	if err != nil {
 		proxy.logger.LogError(event, fmt.Errorf("error to serialize payload: %w", err))
 	}
 
 	signature := proxy.GenerateSignature(payload, event.CreatedAt)
 	req, err := http.NewRequest("POST", "http://re"+proxy.forwardTo, bytes.NewBuffer(payload))
-
 	if err != nil {
 		proxy.logger.LogError(event, fmt.Errorf("error to create request: %w", err))
 
@@ -114,9 +111,8 @@ func (proxy *Proxy) Handle(event WebhookEvent) {
 	req.Header.Set("Content-Type", "application/json")
 
 	reply, err := proxy.client.Do(req)
-
 	if err != nil {
-		proxy.logger.LogError(event, fmt.Errorf("Forward Error: %w", err))
+		proxy.logger.LogError(event, fmt.Errorf("forward Error: %w", err))
 
 		return
 	}
@@ -125,13 +121,12 @@ func (proxy *Proxy) Handle(event WebhookEvent) {
 
 	duration := time.Since(start)
 	body, err := io.ReadAll(reply.Body)
-
 	if err != nil {
-		proxy.logger.LogError(event, fmt.Errorf("Body Download Error: %w", err))
+		proxy.logger.LogError(event, fmt.Errorf("body Download Error: %w", err))
 	}
 
 	proxy.logger.LogForwarded(&ForwardedLog{
-		event:        event,
+		event:      event,
 		body:       body,
 		duration:   duration,
 		statusCode: reply.StatusCode,
@@ -148,4 +143,12 @@ func (proxy *Proxy) GenerateSignature(payload []byte, timestamp time.Time) strin
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-// TODO: func de Close() pra fechar a conexao
+func (p *Proxy) Close() {
+	if p.connection != nil {
+		p.connection.WriteMessage(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	}
+
+	p.connection.Close()
+}
