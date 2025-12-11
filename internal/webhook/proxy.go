@@ -1,6 +1,7 @@
 package webhook
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -58,4 +59,32 @@ func (p *Proxy) Connect() error {
 
 	p.conn = conn
 	return nil
+}
+
+func (p *Proxy) Listen() error {
+	defer p.conn.Close()
+
+	for {
+		var evt WebhookEvent
+
+		err := p.conn.ReadJSON(&evt)
+		if err != nil {
+			// Default websocket closing error
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				return nil
+			}
+
+			return fmt.Errorf("error to read event: %w", err)
+		}
+
+		go p.handleEvent(evt)
+	}
+}
+
+func (p *Proxy) handleEvent(evt WebhookEvent) {
+	start := time.Now()
+
+	p.logger.Log
+
+	json.Unmarshal(evt)
 }
