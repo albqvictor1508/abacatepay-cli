@@ -35,7 +35,6 @@ func logIn() error {
 
 	if key == "" {
 		input, err := prompts.AskAPIKey()
-
 		if err != nil {
 			return err
 		}
@@ -45,7 +44,6 @@ func logIn() error {
 
 	if name == "" {
 		input, err := prompts.AskProfileName()
-
 		if err != nil {
 			return err
 		}
