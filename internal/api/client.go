@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -15,8 +15,14 @@ type Client struct {
 }
 
 type AbacatePayResponse struct {
-	data  any
-	error string
+	Data  map[string]any `json:"data"`
+	Error string         `json:"error"`
+}
+
+type RequestOptions struct {
+	Key    string
+	Route  string
+	Method string
 }
 
 func NewClient(key string) *Client {
@@ -28,39 +34,33 @@ func NewClient(key string) *Client {
 	}
 }
 
-func ValidateAPIKey(key string) (bool, error) {
-	client := NewClient(key)
-
-	req, err := http.NewRequest("GET", baseURL+"/store/get", nil)
+func (c *Client) Request(options RequestOptions) (map[string]any, error) {
+	req, err := http.NewRequest(options.Method, baseURL+options.Route, nil)
 
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+key)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+options.Key)
 
-	reply, err := client.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	defer reply.Body.Close()
+	defer resp.Body.Close()
 
-	if reply.StatusCode == http.StatusOK {
-		return true, nil
+	var payload AbacatePayResponse
+
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return nil, err
 	}
 
-	if reply.StatusCode == http.StatusUnauthorized {
-		return false, nil
+	if payload.Error != "" {
+		return nil, errors.New(payload.Error)
 	}
 
-	var error AbacatePayResponse
-
-	if err := json.NewDecoder(reply.Body).Decode(&error); err != nil {
-		return false, fmt.Errorf("Unknown AbacatePay error, status (%d)", reply.StatusCode)
-	}
-
-	return false, fmt.Errorf("AbacatePay API error: %v", error.error)
+	return payload.Data, nil
 }

@@ -8,7 +8,7 @@ import (
 
 func AskProfileName() (string, error) {
 	var name string
-	
+
 	const maxNameLen = 50
 
 	err := survey.AskOne(&survey.Input{

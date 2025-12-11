@@ -47,7 +47,7 @@ func (logger *Logger) LogReceived(evt WebhookEvent) {
 	logger.green.Printf("-> ")
 
 	fmt.Printf("Received: %s", evt.Type)
-	
+
 	logger.gray.Printf("(ID: %s)\n", evt.ID)
 }
 
