@@ -6,20 +6,20 @@ import (
 )
 
 func GetGitRepo() string {
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-	output, err := cmd.Output()
+	output, err := exec.Command("git", "remote", "get-url", "origin").Output()
+
 	if err != nil {
 		return ""
 	}
 
-	url := strings.TrimSpace(string(output))
-	parts := strings.Split(url, "/")
-	if len(parts) > 0 {
-		repoName := parts[len(parts)-1]
-		repoName = strings.TrimSuffix(repoName, ".git")
+	url := strings.TrimSuffix(strings.TrimSpace(string(output)), ".git")
 
-		return repoName
+	// SSH style: git@github.com:user/repo
+	if idx := strings.LastIndex(url, ":"); idx != -1 && !strings.Contains(url[:idx], "/") {
+		url = url[idx+1:]
 	}
 
-	return ""
+	parts := strings.Split(url, "/")
+
+	return parts[len(parts)-1]
 }
