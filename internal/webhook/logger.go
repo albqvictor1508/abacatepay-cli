@@ -62,6 +62,13 @@ func (l *Logger) LogForwarded(fl *ForwardedLog) {
 	}
 }
 
+func (l *Logger) LogError(evt WebhookEvent, err error) {
+	l.gray.Printf("[%s]", timestamp)
+
+	l.red.Printf("✗ ")
+	fmt.Printf("Error processing event %s (ID: %s): %v\n", evt.Type, evt.ID, err)
+}
+
 func (l *Logger) printStatusIcon(statusCode int) {
 	if statusCode >= 400 {
 		l.red.Printf("✗ ")

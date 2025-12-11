@@ -1,6 +1,10 @@
 package webhook
 
 import (
+	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -69,6 +73,7 @@ func (p *Proxy) Listen() error {
 
 		err := p.conn.ReadJSON(&evt)
 		if err != nil {
+
 			// Default websocket closing error
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				return nil
@@ -84,7 +89,50 @@ func (p *Proxy) Listen() error {
 func (p *Proxy) handleEvent(evt WebhookEvent) {
 	start := time.Now()
 
-	p.logger.Log
+	p.logger.LogReceived(evt)
 
-	json.Unmarshal(evt)
+	payload, err := json.Marshal(evt)
+	if err != nil {
+		p.logger.LogError(evt, fmt.Errorf("error to serialize payload: %w", err))
+	}
+
+	signature := p.generateSignature(payload, evt.CreatedAt)
+	req, err := http.NewRequest("POST", "http://re"+p.forwardTo, bytes.NewBuffer(payload))
+	if err != nil {
+		p.logger.LogError(evt, fmt.Errorf("error to create request: %w", err))
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Abacate-Signature", signature)
+	req.Header.Set("X-Abacate-Event-Type", evt.Type)
+	req.Header.Set("X-Abacate-Event-ID", evt.ID)
+
+	reply, err := p.httpClient.Do(req)
+	if err != nil {
+		p.logger.LogError(evt, fmt.Errorf("error to make forward: %w", err))
+		return
+	}
+	defer reply.Body.Close()
+
+	body, _ := io.ReadAll(reply.Body)
+	duration := time.Since(start)
+
+	p.logger.LogForwarded(&ForwardedLog{
+		evt:        evt,
+		statusCode: reply.StatusCode,
+		body:       body,
+		duration:   duration,
+	})
 }
+
+func (p *Proxy) generateSignature(payload []byte, timestamp time.Time) string {
+	signedPayload := fmt.Sprintf("%d,%s", timestamp.Unix(), string(payload))
+
+	h := hmac.New(sha256.New, []byte(p.signingSecret))
+	h.Write([]byte(signedPayload))
+
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// TODO: func de Close() pra fechar a conexao
