@@ -62,5 +62,5 @@ func ValidateAPIKey(key string) (bool, error) {
 		return false, fmt.Errorf("Unknown AbacatePay error, status (%d)", reply.StatusCode)
 	}
 
-	return false, fmt.Errorf(error.error)
+	return false, fmt.Errorf("AbacatePay API error: %v", error.error)
 }

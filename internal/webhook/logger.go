@@ -16,86 +16,96 @@ type Logger struct {
 }
 
 type ForwardedLog struct {
-	evt        WebhookEvent
 	statusCode int
-	duration   time.Duration
 	body       []byte
+	event      WebhookEvent
+	duration   time.Duration
 }
 
 func NewLogger() *Logger {
 	return &Logger{
+		gray:   color.New(color.FgHiBlack),
+		red:    color.New(color.FgRed, color.Bold),
 		blue:   color.New(color.FgBlue, color.Bold),
 		green:  color.New(color.FgGreen, color.Bold),
-		red:    color.New(color.FgRed, color.Bold),
 		yellow: color.New(color.FgYellow, color.Bold),
-		gray:   color.New(color.FgHiBlack),
 	}
 }
 
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
+func Truncate(str string, maxSize int) string {
+	if len(str) <= maxSize {
+		return str
 	}
-	return s[:maxLen] + "..."
+
+	return str[:maxSize] + "..."
 }
 
 var timestamp = time.Now().Format("08:06:20")
 
-func (l *Logger) LogReceived(evt WebhookEvent) {
-	l.gray.Printf("[%s]", timestamp)
-	l.green.Printf("-> ")
+func (logger *Logger) LogReceived(evt WebhookEvent) {
+	logger.gray.Printf("[%s]", timestamp)
+	logger.green.Printf("-> ")
+
 	fmt.Printf("Received: %s", evt.Type)
-	l.gray.Printf("(ID: %s)\n", evt.ID)
+	
+	logger.gray.Printf("(ID: %s)\n", evt.ID)
 }
 
-func (l *Logger) LogForwarded(fl *ForwardedLog) {
-	l.gray.Printf("[%s]", timestamp)
+func (logger *Logger) LogForwarded(fl *ForwardedLog) {
+	logger.gray.Printf("[%s]", timestamp)
 
-	l.printStatusIcon(fl.statusCode)
-	fmt.Printf("%s", fl.evt.Type)
+	logger.PrintStatusIcon(fl.statusCode)
 
-	l.printStatusCode(fl.statusCode)
+	fmt.Printf("%s", fl.event.Type)
 
-	l.gray.Printf("%dms\n", fl.duration.Milliseconds())
+	logger.PrintStatusCode(fl.statusCode)
+
+	logger.gray.Printf("%dms\n", fl.duration.Milliseconds())
+
 	if fl.statusCode >= 400 && len(fl.body) > 0 {
-		l.gray.Printf("Reply:%s\n", truncate(string(fl.body), 100))
+		logger.gray.Printf("Reply:%s\n", Truncate(string(fl.body), 100))
 	}
 }
 
-func (l *Logger) LogError(evt WebhookEvent, err error) {
-	l.gray.Printf("[%s]", timestamp)
+func (logger *Logger) LogError(event WebhookEvent, err error) {
+	logger.gray.Printf("[%s]", timestamp)
 
-	l.red.Printf("✗ ")
-	fmt.Printf("Error processing event %s (ID: %s): %v\n", evt.Type, evt.ID, err)
+	logger.red.Printf("✗ ")
+
+	fmt.Printf("Error processing event %s (ID: %s): %v\n", event.Type, event.ID, err)
 }
 
-func (l *Logger) printStatusIcon(statusCode int) {
-	if statusCode >= 400 {
-		l.red.Printf("✗ ")
-		l.red.Printf("[%d]", statusCode)
+func (logger *Logger) PrintStatusIcon(status int) {
+	if status >= 400 {
+		logger.red.Printf("✗ ")
+		logger.red.Printf("[%d]", status)
+
 		return
 	}
 
-	if statusCode >= 200 && statusCode < 300 {
-		l.green.Printf("✓ ")
-		l.green.Printf("[%d]", statusCode)
+	if status >= 200 && status < 300 {
+		logger.green.Printf("✓ ")
+		logger.green.Printf("[%d]", status)
+
 		return
 	}
 
-	l.yellow.Printf("→ ")
-	l.yellow.Printf("[%d]", statusCode)
+	logger.yellow.Printf("→ ")
+	logger.yellow.Printf("[%d]", status)
 }
 
-func (l *Logger) printStatusCode(statusCode int) {
-	if statusCode >= 400 {
-		l.red.Printf("[%d]", statusCode)
+func (logger *Logger) PrintStatusCode(status int) {
+	if status >= 400 {
+		logger.red.Printf("[%d]", status)
+
 		return
 	}
 
-	if statusCode >= 200 && statusCode < 300 {
-		l.green.Printf("[%d]", statusCode)
+	if status >= 200 && status < 300 {
+		logger.green.Printf("[%d]", status)
+
 		return
 	}
 
-	l.yellow.Printf("[%d]", statusCode)
+	logger.yellow.Printf("[%d]", status)
 }

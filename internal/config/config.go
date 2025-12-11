@@ -90,13 +90,12 @@ func (c *Config) Save(name string, key string) error {
 }
 
 func (c *Config) Exists(name string) bool {
-    // Trimmar a string no futuro? name = strings.TrimSpace(name)
+	// Trimmar a string no futuro? name = strings.TrimSpace(name)
 
-    _, exists := c.Profiles[name]
-	
-    return exists
+	_, exists := c.Profiles[name]
+
+	return exists
 }
-
 
 func (c *Config) Add(name, key string) error {
 	c.Profiles[name] = Profile{
