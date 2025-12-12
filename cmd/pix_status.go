@@ -24,7 +24,6 @@ var pixStatusCmd = &cobra.Command{
 		client := api.NewClient(key)
 
 		data, err := client.Request(api.RequestOptions{
-			Key:    key,
 			Method: "GET",
 			Route:  "/pixQrCode/check?id=" + id,
 		})

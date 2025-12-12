@@ -20,7 +20,6 @@ type AbacatePayResponse struct {
 }
 
 type RequestOptions struct {
-	Key    string
 	Route  string
 	Method string
 }
@@ -42,7 +41,7 @@ func (c *Client) Request(options RequestOptions) (map[string]any, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+options.Key)
+	req.Header.Set("Authorization", "Bearer "+c.key)
 
 	resp, err := c.httpClient.Do(req)
 
