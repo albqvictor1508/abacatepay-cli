@@ -52,8 +52,8 @@ func update() {
 		log.Println("error ocurred while updating binary:", err)
 		return
 	}
+	
 	log.Println("Successfully updated to version", latest.Version)
-	return
 }
 
 func CheckForUpdate() (*selfupdate.Release, error) {
