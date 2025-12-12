@@ -15,7 +15,7 @@ var docsCmd = &cobra.Command{
 		url := "https://docs.abacatepay.com"
 
 		if useReference {
-			url = url + "/api-reference"
+			url += "/api-reference"
 		}
 
 		return open(url)
