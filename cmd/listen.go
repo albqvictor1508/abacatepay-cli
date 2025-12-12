@@ -38,7 +38,7 @@ func listen() error {
 	fmt.Println("Abacate Pay")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Printf("→  Forward to: http://%s\n", forwardTo)
-	fmt.Printf("→  Webhook Signing Secret: %s\n", proxy.SigningSecret())
+	fmt.Printf("→  Webhook Signing Secret: %s\n", proxy.GetSigningSecret())
 
 	if err := proxy.Connect(); err != nil {
 		return fmt.Errorf("error to connect: %w", err)
