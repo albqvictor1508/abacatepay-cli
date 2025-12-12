@@ -36,6 +36,10 @@ func genSigningSecret() string {
 	return fmt.Sprintf("whsec_%d", time.Now().UnixNano())
 }
 
+func (p *Proxy) GetSigningSecret() string {
+	return p.signingSecret
+}
+
 func NewProxy(apiKey, forwardTo string) *Proxy {
 	return &Proxy{
 		apiKey:        apiKey,
