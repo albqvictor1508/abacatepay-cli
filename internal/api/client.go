@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 )
@@ -22,6 +24,7 @@ type AbacatePayResponse struct {
 type RequestOptions struct {
 	Route  string
 	Method string
+	Body   *[]byte
 }
 
 func NewClient(key string) *Client {
@@ -34,8 +37,12 @@ func NewClient(key string) *Client {
 }
 
 func (c *Client) Request(options RequestOptions) (map[string]any, error) {
-	req, err := http.NewRequest(options.Method, baseURL+options.Route, nil)
+	var bodyReader io.Reader
+	if options.Body != nil {
+		bodyReader = bytes.NewBuffer(*options.Body)
+	}
 
+	req, err := http.NewRequest(options.Method, baseURL+options.Route, bodyReader)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +51,6 @@ func (c *Client) Request(options RequestOptions) (map[string]any, error) {
 	req.Header.Set("Authorization", "Bearer "+c.key)
 
 	resp, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
