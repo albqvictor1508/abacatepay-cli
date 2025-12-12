@@ -19,7 +19,6 @@ type Config struct {
 
 func getPath() (string, error) {
 	home, err := os.UserHomeDir()
-
 	if err != nil {
 		return "", err
 	}
@@ -29,13 +28,11 @@ func getPath() (string, error) {
 
 func Load() (*Config, error) {
 	path, err := getPath()
-
 	if err != nil {
 		return nil, err
 	}
 
 	data, err := os.ReadFile(path)
-
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &Config{
@@ -61,7 +58,6 @@ func Load() (*Config, error) {
 
 func (c *Config) Save(name string, key string) error {
 	path, err := getPath()
-
 	if err != nil {
 		return err
 	}
@@ -75,7 +71,6 @@ func (c *Config) Save(name string, key string) error {
 	}
 
 	data, err := json.MarshalIndent(c, "", "  ")
-
 	if err != nil {
 		return err
 	}
@@ -108,7 +103,6 @@ func (c *Config) Add(name, key string) error {
 
 func SaveCurrent(name string, key string) error {
 	config, err := Load()
-
 	if err != nil {
 		return err
 	}
