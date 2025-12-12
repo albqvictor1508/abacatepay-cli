@@ -36,7 +36,7 @@ var pixStatusCmd = &cobra.Command{
 		status, _ := data["status"].(string)
 
 		fmt.Printf("Your PIX \"%s\" status is \"%s\"\n", id, status)
-		
+
 		return nil
 	},
 }

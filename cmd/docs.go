@@ -6,15 +6,25 @@ import (
 	"runtime"
 )
 
+var useReference bool
+
 var docsCmd = &cobra.Command{
 	Use:   "docs",
 	Short: "Open AbacatePay documentation in the browser",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return open("https://docs.abacatepay.com")
+		url := "https://docs.abacatepay.com"
+
+		if useReference {
+			url = url + "/api-reference"
+		}
+
+		return open(url)
 	},
 }
 
 func init() {
+	docsCmd.Flags().BoolVarP(&useReference, "reference", "r", false, "Go directly to the API reference")
+
 	rootCmd.AddCommand(docsCmd)
 }
 
