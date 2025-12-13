@@ -22,7 +22,7 @@ var listenCmd = &cobra.Command{
 }
 
 func init() {
-	listenCmd.Flags().StringVarP(&forwardTo, "forward-to", "f", "localhost:3000/webhook", "Local URL to receive webhooks")
+	listenCmd.Flags().StringVarP(&forwardTo, "forward-to", "f", "localhost:3000/webhooks", "Local URL to receive webhooks")
 
 	rootCmd.AddCommand(listenCmd)
 }

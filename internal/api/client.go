@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -68,4 +69,38 @@ func (c *Client) Request(options RequestOptions) (map[string]any, error) {
 	}
 
 	return payload.Data, nil
+}
+
+func ValidateAPIKey(apiKey string) (bool, error) {
+	client := NewClient(apiKey)
+
+	req, err := http.NewRequest("GET", baseURL+"/store/get", nil)
+	if err != nil {
+		return false, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return true, nil
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return false, nil
+	}
+
+	var errorResponse map[string]any
+
+	if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+		return false, fmt.Errorf("error to validate: status %d", resp.StatusCode)
+	}
+
+	return false, fmt.Errorf("error to validate: %v", errorResponse)
 }

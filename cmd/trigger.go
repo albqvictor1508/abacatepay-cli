@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os/exec"
 	"slices"
 
 	"github.com/albqvictor1508/abacatepay-cli/internal/webhook"
@@ -14,11 +15,16 @@ var triggerCmd = &cobra.Command{
 	RunE:  trigger,
 }
 
+var forwardURL string
+
 func init() {
+	triggerCmd.Flags().StringVarP(&forwardURL, "forward-to", "f", "http://localhost:3000/api/webhooks", "Local URL to trigger webhooks")
 	rootCmd.AddCommand(triggerCmd)
 }
 
-func trigger(cmd *cobra.Command, args []string) error {
+func trigger(_ *cobra.Command, args []string) error {
+	var cmd *exec.Cmd
+
 	evtType := args[0]
 
 	availableEvents := webhook.ListAvailableEvents()
@@ -28,8 +34,6 @@ func trigger(cmd *cobra.Command, args []string) error {
 	if !valid {
 		return fmt.Errorf("invalid event: %s\nAvailable events: %v", evtType, availableEvents)
 	}
-
-	forwardURL, _ := cmd.Flags().GetString("forward-to")
 
 	testSecret := "whsec_local_testing_secret"
 
@@ -42,7 +46,7 @@ func trigger(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Event sent with sucess!")
 	fmt.Println("  Check your terminal or the application logs")
-	fmt.Println("\n💡 Tip: The header 'X-Abacate-Test-Event: true' indicates that is a test event")
+	fmt.Println("\n💡 Tip: The header 'X-Abacate-Test-Event: true' indicates that this is a test event")
 
-	return nil
+	return cmd.Start()
 }

@@ -5,8 +5,10 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/albqvictor1508/abacatepay-cli/internal/api"
 	"github.com/albqvictor1508/abacatepay-cli/internal/config"
 	"github.com/albqvictor1508/abacatepay-cli/internal/prompts"
+	"github.com/albqvictor1508/abacatepay-cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -63,6 +65,25 @@ func logIn() error {
 
 	if err := config.Add(name, key); err != nil {
 		return err
+	}
+
+	if !utils.IsOnline() {
+		return fmt.Errorf("Unable to verify API key. You're offline.")
+	}
+
+	// TODO: adicionar um spinner ou algo do tipo aq pra ficar daorinha
+
+	valid, err := api.ValidateAPIKey(key)
+	if err != nil {
+		return err
+	}
+
+	if !valid {
+		return fmt.Errorf("Invalid API key.")
+	}
+
+	if err := config.SaveKeyring(name, key); err != nil {
+		return fmt.Errorf("error to save on keyring: %w", err)
 	}
 
 	return cmd.Start()

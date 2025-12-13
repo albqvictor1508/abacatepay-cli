@@ -31,7 +31,7 @@ func GetEventTemplates() map[string]EventTemplate {
 		"id":       "cust_" + uuid.New().String()[:8],
 		"name":     faker.Name(),
 		"email":    faker.Internet().Email(),
-		"phone":    faker.Phoneumber().CellPhone(),
+		"phone":    faker.PhoneNumber().CellPhone(),
 		"document": faker.Business().Cpf(),
 		"type":     "individual",
 	}
@@ -40,7 +40,7 @@ func GetEventTemplates() map[string]EventTemplate {
 		"id":           "cust_" + uuid.New().String()[:8],
 		"name":         faker.Company().Name(),
 		"email":        faker.Internet().FreeEmail(),
-		"phone":        faker.Phoneumber().PhoneNumber(),
+		"phone":        faker.PhoneNumber().PhoneNumber(),
 		"document":     faker.Business().Cnpj(),
 		"type":         "business",
 		"company_name": faker.Company().Name(),
@@ -73,8 +73,8 @@ func GetEventTemplates() map[string]EventTemplate {
 				"status":   "paid",
 				"paid_at":  time.Now().Format(time.RFC3339),
 				"pix": map[string]interface{}{
-					"txid":       faker.RandomString(32),
-					"end_to_end": "E" + faker.RandomString(31),
+					"txid":       faker.Lorem().Characters(32),
+					"end_to_end": "E" + faker.Lorem().Characters(31),
 					"payer": map[string]interface{}{
 						"name":     customer["name"],
 						"document": customer["document"],
@@ -87,9 +87,9 @@ func GetEventTemplates() map[string]EventTemplate {
 					"description": "Assinatura " + selectedProduct,
 				},
 				"metadata": map[string]interface{}{
-					"order_id":   faker.RandomString(16),
+					"order_id":   faker.Lorem().Characters(16),
 					"ip_address": faker.Internet().IpV4Address(),
-					"user_agent": faker.Internet().UserAgent,
+					"user_agent": faker.Internet().UserAgent(),
 				},
 				"created_at": time.Now().Add(-2 * time.Minute).Format(time.RFC3339),
 			},
@@ -104,8 +104,8 @@ func GetEventTemplates() map[string]EventTemplate {
 				"completed_at": time.Now().Format(time.RFC3339),
 				"method":       "pix",
 				"pix": map[string]interface{}{
-					"txid":       faker.RandomString(32),
-					"end_to_end": "E" + faker.RandomString(31),
+					"txid":       faker.Lorem().Characters(32),
+					"end_to_end": "E" + faker.Lorem().Characters(31),
 					"recipient": map[string]interface{}{
 						"name":         faker.Name(),
 						"document":     faker.Business().Cpf(),

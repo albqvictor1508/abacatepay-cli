@@ -5,7 +5,9 @@ go 1.25.5
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/dimiro1/faker v0.0.0-20160302003601-367c84ded970
 	github.com/fatih/color v1.18.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/rhysd/go-github-selfupdate v1.2.3
 	github.com/spf13/cobra v1.10.2
