@@ -15,6 +15,7 @@ var triggerCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.AddCommand(triggerCmd)
 }
 
 func trigger(cmd *cobra.Command, args []string) error {
@@ -23,25 +24,27 @@ func trigger(cmd *cobra.Command, args []string) error {
 	availableEvents := webhook.ListAvailableEvents()
 	valid := false
 	slices.Contains(availableEvents, evtType)
+
 	if !valid {
 		return fmt.Errorf("invalid event: %s\nAvailable events: %v", evtType, availableEvents)
 	}
 
 	forwardURL, _ := cmd.Flags().GetString("forward-to")
 
-	// Nota: Como não temos acesso ao signing secret do proxy rodando,
-	// vamos usar um secret fixo para testes locais
-	// O usuário pode validar usando X-Abacate-Test-Event: true
 	testSecret := "whsec_local_testing_secret"
 
 	fmt.Printf("Trigging test events: %s\n", evtType)
 	fmt.Printf("→  Endpoint: http://%s\n\n", forwardURL)
 
-	if err := webhook.TriggerLocalEvent(evtType, forwardURL, testSecret); err != nil {
+	evt, err := webhook.TriggerLocalEvent(evtType, forwardURL, testSecret)
+	if err != nil {
 		return fmt.Errorf("error to trigger event: %w", err)
 	}
+	if err := webhook.SaveEventLog(evt); err != nil {
+		fmt.Printf("[WARN] unable to save in history: %v\n", err)
+	}
 
-	fmt.Println("Event sended with sucess!")
+	fmt.Println("Event sent with sucess!")
 	fmt.Println("  Check your terminal or the application logs")
 	fmt.Println("\n💡 Tip: The header 'X-Abacate-Test-Event: true' indicates that is a test event")
 
