@@ -1,58 +1,49 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
+	"slices"
 
-	"github.com/google/uuid"
+	"github.com/albqvictor1508/abacatepay-cli/internal/webhook"
+	"github.com/spf13/cobra"
 )
 
-func TriggerLocalEvent(eventType, forwardTo, signingSecret string) error {
-	templates := GetEventTemplates()
-	template, exists := templates[eventType]
+var triggerCmd = &cobra.Command{
+	Use:   "trigger",
+	Short: "Trigger a test webhook locally",
+	RunE:  trigger,
+}
 
-	if !exists {
-		return fmt.Errorf("invalid event type: %s", eventType)
+func init() {
+}
+
+func trigger(cmd *cobra.Command, args []string) error {
+	evtType := args[0]
+
+	availableEvents := webhook.ListAvailableEvents()
+	valid := false
+	slices.Contains(availableEvents, evtType)
+	if !valid {
+		return fmt.Errorf("invalid event: %s\nAvailable events: %v", evtType, availableEvents)
 	}
 
-	event := WebhookEvent{
-		ID:        "evt_" + uuid.New().String()[:12],
-		Type:      template.Type,
-		CreatedAt: time.Now(),
-		Data:      template.Data,
+	forwardURL, _ := cmd.Flags().GetString("forward-to")
+
+	// Nota: Como não temos acesso ao signing secret do proxy rodando,
+	// vamos usar um secret fixo para testes locais
+	// O usuário pode validar usando X-Abacate-Test-Event: true
+	testSecret := "whsec_local_testing_secret"
+
+	fmt.Printf("Trigging test events: %s\n", evtType)
+	fmt.Printf("→  Endpoint: http://%s\n\n", forwardURL)
+
+	if err := webhook.TriggerLocalEvent(evtType, forwardURL, testSecret); err != nil {
+		return fmt.Errorf("error to trigger event: %w", err)
 	}
 
-	payload, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("error to serialize json: %w", err)
-	}
-
-	signature := generateSignature(payload, event.CreatedAt, signingSecret)
-
-	req, err := http.NewRequest("POST", "http://"+forwardTo, bytes.NewBuffer(payload))
-	if err != nil {
-		return fmt.Errorf("erro ao criar request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Abacate-Signature", signature)
-	req.Header.Set("X-Abacate-Event-Type", event.Type)
-	req.Header.Set("X-Abacate-Event-ID", event.ID)
-	req.Header.Set("X-Abacate-Test-Event", "true")
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("error to send webhook: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("endpoint returns status %d", resp.StatusCode)
-	}
+	fmt.Println("Event sended with sucess!")
+	fmt.Println("  Check your terminal or the application logs")
+	fmt.Println("\n💡 Tip: The header 'X-Abacate-Test-Event: true' indicates that is a test event")
 
 	return nil
 }
