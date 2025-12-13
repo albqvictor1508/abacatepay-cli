@@ -72,8 +72,8 @@ func GetEventTemplates() map[string]EventTemplate {
 					"txid":       faker.RandomString(32),
 					"end_to_end": "E" + faker.RandomString(31),
 					"payer": map[string]interface{}{
-						"name":     customer.(map[string]interface{})["name"],
-						"document": customer.(map[string]interface{})["document"],
+						"name":     customer["name"],
+						"document": customer["document"],
 					},
 				},
 				"customer": customer,
