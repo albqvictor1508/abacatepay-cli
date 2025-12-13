@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/dimiro1/faker"
@@ -26,43 +24,6 @@ type EventLog struct {
 type EventTemplate struct {
 	Type string
 	Data map[string]interface{}
-}
-
-func SaveEventLog(evt *WebhookEvent) error {
-	log := EventLog{
-		Event:     evt,
-		Timestamp: time.Now(),
-		Source:    "trigger",
-	}
-	return appendLog(log)
-}
-
-func appendLog(log EventLog) error {
-	path, err := getLogsPath()
-	if err != nil {
-		return err
-	}
-
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-
-	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	file, err := os.OpenFile(path, flags, 0o644)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	data, err := json.Marshal(log)
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(append(data, '\n'))
-	return err
 }
 
 func GetEventTemplates() map[string]EventTemplate {
