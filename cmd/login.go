@@ -53,18 +53,10 @@ func logIn() error {
 		name = input
 	}
 
-	config, err := config.Load()
+	cfg, err := config.Load()
 
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("Unknown error while loading the profile (%w)", err)
-	}
-
-	if config.Exists(name) {
-		return fmt.Errorf("Name \"%s\" is already being used as a profile", name)
-	}
-
-	if err := config.Add(name, key); err != nil {
-		return err
 	}
 
 	if !utils.IsOnline() {
@@ -82,8 +74,12 @@ func logIn() error {
 		return fmt.Errorf("Invalid API key.")
 	}
 
-	if err := config.SaveKeyring(name, key); err != nil {
-		return fmt.Errorf("error to save on keyring: %w", err)
+	if cfg.Exists(name) {
+		return fmt.Errorf("Name \"%s\" is already being used as a profile", name)
+	}
+
+	if err := cfg.Add(name, key); err != nil {
+		return err
 	}
 
 	return cmd.Start()

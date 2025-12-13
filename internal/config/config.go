@@ -111,3 +111,8 @@ func SaveCurrent(name string, key string) error {
 
 	return config.Save(name, key)
 }
+
+func (c *Config) ProfileExists(name string) bool {
+	_, exists := c.Profiles[name]
+	return exists
+}
