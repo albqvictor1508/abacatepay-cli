@@ -26,24 +26,32 @@ type EventTemplate struct {
 	Data map[string]interface{}
 }
 
-func GetEventTemplates() map[string]EventTemplate {
+func GetEventTemplates() (map[string]EventTemplate, error) {
+	options := faker.Options{
+		Locale: "pt_BR",
+	}
+	fk, err := faker.New(options)
+	if err != nil {
+		return nil, fmt.Errorf("error to setup faker: %w", err)
+	}
+
 	customerPF := map[string]interface{}{
 		"id":       "cust_" + uuid.New().String()[:8],
-		"name":     faker.Name(),
-		"email":    faker.Internet().Email(),
-		"phone":    faker.PhoneNumber().CellPhone(),
-		"document": faker.Business().Cpf(),
+		"name":     fk.Person().Name(),
+		"email":    fk.Internet().Email(),
+		"phone":    fk.Phone().CellPhone(),
+		"document": fk.Person().CPF(),
 		"type":     "individual",
 	}
 
 	customerPJ := map[string]interface{}{
 		"id":           "cust_" + uuid.New().String()[:8],
-		"name":         faker.Company().Name(),
-		"email":        faker.Internet().FreeEmail(),
-		"phone":        faker.PhoneNumber().PhoneNumber(),
-		"document":     faker.Business().Cnpj(),
+		"name":         fk.Company().Name(),
+		"email":        fk.Internet().FreeEmail(),
+		"phone":        fk.Phone().PhoneNumber(),
+		"document":     fk.Company().CNPJ(),
 		"type":         "business",
-		"company_name": faker.Company().Name(),
+		"company_name": fk.Company().Name(),
 	}
 
 	customer := customerPF
@@ -73,8 +81,8 @@ func GetEventTemplates() map[string]EventTemplate {
 				"status":   "paid",
 				"paid_at":  time.Now().Format(time.RFC3339),
 				"pix": map[string]interface{}{
-					"txid":       faker.Lorem().Characters(32),
-					"end_to_end": "E" + faker.Lorem().Characters(31),
+					"txid":       fk.Lorem().Characters(32),
+					"end_to_end": "E" + fk.Lorem().Characters(31),
 					"payer": map[string]interface{}{
 						"name":     customer["name"],
 						"document": customer["document"],
@@ -87,9 +95,9 @@ func GetEventTemplates() map[string]EventTemplate {
 					"description": "Assinatura " + selectedProduct,
 				},
 				"metadata": map[string]interface{}{
-					"order_id":   faker.Lorem().Characters(16),
-					"ip_address": faker.Internet().IpV4Address(),
-					"user_agent": faker.Internet().UserAgent(),
+					"order_id":   fk.Lorem().Characters(16),
+					"ip_address": fk.Internet().Ipv4(),
+					"user_agent": fk.Internet().UserAgent(),
 				},
 				"created_at": time.Now().Add(-2 * time.Minute).Format(time.RFC3339),
 			},
@@ -104,13 +112,13 @@ func GetEventTemplates() map[string]EventTemplate {
 				"completed_at": time.Now().Format(time.RFC3339),
 				"method":       "pix",
 				"pix": map[string]interface{}{
-					"txid":       faker.Lorem().Characters(32),
-					"end_to_end": "E" + faker.Lorem().Characters(31),
+					"txid":       fk.Lorem().Characters(32),
+					"end_to_end": "E" + fk.Lorem().Characters(31),
 					"recipient": map[string]interface{}{
-						"name":         faker.Name(),
-						"document":     faker.Business().Cpf(),
+						"name":         fk.Person().Name(),
+						"document":     fk.Person().CPF(),
 						"bank":         []string{"Nubank", "Banco do Brasil", "Itaú", "Bradesco", "Santander", "Caixa"}[rand.Intn(6)],
-						"pix_key":      faker.Internet().Email(),
+						"pix_key":      fk.Internet().Email(),
 						"pix_key_type": "email",
 					},
 				},
@@ -121,8 +129,8 @@ func GetEventTemplates() map[string]EventTemplate {
 				},
 				"net_amount": int(float64(amount) * 0.98),
 				"metadata": map[string]interface{}{
-					"requested_by": faker.Internet().Email(),
-					"ip_address":   faker.Internet().IpV4Address(),
+					"requested_by": fk.Internet().Email(),
+					"ip_address":   fk.Internet().Ipv4(),
 				},
 				"requested_at": time.Now().Add(-5 * time.Minute).Format(time.RFC3339),
 			},
@@ -161,22 +169,22 @@ func GetEventTemplates() map[string]EventTemplate {
 				}[rand.Intn(6)]],
 				"pix": map[string]interface{}{
 					"recipient": map[string]interface{}{
-						"name":         faker.Name(),
-						"document":     faker.Business().Cpf(),
+						"name":         fk.Person().Name(),
+						"document":     fk.Person().CPF(),
 						"bank":         []string{"Nubank", "Banco do Brasil", "Itaú", "Bradesco", "Santander"}[rand.Intn(5)],
-						"pix_key":      faker.Internet().Email(),
+						"pix_key":      fk.Internet().Email(),
 						"pix_key_type": "email",
 					},
 				},
 				"metadata": map[string]interface{}{
-					"requested_by": faker.Internet().Email(),
-					"ip_address":   faker.Internet().IpV4Address(),
+					"requested_by": fk.Internet().Email(),
+					"ip_address":   fk.Internet().Ipv4(),
 					"retry_count":  rand.Intn(3),
 				},
 				"requested_at": time.Now().Add(-10 * time.Minute).Format(time.RFC3339),
 			},
 		},
-	}
+	}, nil
 }
 
 func generateSignature(payload []byte, timestamp time.Time, secret string) string {
