@@ -82,5 +82,7 @@ func logIn() error {
 		return err
 	}
 
+	fmt.Printf("Successfully logged in. Profile '%s' is now active.\n", name)
+
 	return cmd.Start()
 }

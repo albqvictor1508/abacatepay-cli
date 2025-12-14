@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -56,17 +57,14 @@ func Load() (*Config, error) {
 	return &config, nil
 }
 
-func (c *Config) Save(name string, key string) error {
+func (c *Config) saveConfig() error {
 	path, err := getPath()
 	if err != nil {
 		return err
 	}
 
 	dir := filepath.Dir(path)
-
-	const permUserReadWriteExec = 0o755
-
-	if err := os.MkdirAll(dir, permUserReadWriteExec); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 
@@ -75,20 +73,19 @@ func (c *Config) Save(name string, key string) error {
 		return err
 	}
 
+	return os.WriteFile(path, data, 0o644)
+}
+
+func (c *Config) Save(name string, key string) error {
 	if err := SaveKeyring(name, key); err != nil {
 		return err
 	}
 
-	const permFileReadable = 0o644
-
-	return os.WriteFile(path, data, permFileReadable)
+	return c.saveConfig()
 }
 
 func (c *Config) Exists(name string) bool {
-	// Trimmar a string no futuro? name = strings.TrimSpace(name)
-
 	_, exists := c.Profiles[name]
-
 	return exists
 }
 
@@ -97,19 +94,35 @@ func (c *Config) Add(name, key string) error {
 		Verified:  true,
 		CreatedAt: time.Now().Format(time.RFC3339),
 	}
+	c.Current = name
 
-	return c.Save(name, key)
-}
-
-func SaveCurrent(name string, key string) error {
-	config, err := Load()
-	if err != nil {
-		return err
+	if err := SaveKeyring(name, key); err != nil {
+		return fmt.Errorf("failed to save key for profile '%s': %w", name, err)
 	}
 
-	config.Current = name
+	if err := SaveKeyring("current", key); err != nil {
+		return fmt.Errorf("failed to set 'current' key: %w", err)
+	}
 
-	return config.Save(name, key)
+	return c.saveConfig()
+}
+
+func (c *Config) SetCurrent(name string) error {
+	if !c.Exists(name) {
+		return fmt.Errorf("profile '%s' does not exist", name)
+	}
+
+	key, err := GetKeyring(name)
+	if err != nil {
+		return fmt.Errorf("could not retrieve key for profile '%s': %w", name, err)
+	}
+
+	if err := SaveKeyring("current", key); err != nil {
+		return fmt.Errorf("failed to set 'current' key: %w", err)
+	}
+
+	c.Current = name
+	return c.saveConfig()
 }
 
 func (c *Config) ProfileExists(name string) bool {
